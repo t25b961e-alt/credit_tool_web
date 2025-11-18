@@ -75,24 +75,12 @@ if st.button("結果を表示"):
     st.markdown("---")
     st.subheader("合算要件の判定")
     if mode == "p":
-        st.caption(f"基準：B1余剰 + C + E ≥ {PROG_BCE_MIN}")
+        st.caption(f"基準：B1余剰分 + C + E ≥ {PROG_BCE_MIN}")
     else:
-        st.caption(f"基準：B1余剰 + C + D + E ≥ {GRAD_BCDE_MIN}")
+        st.caption(f"基準：B1余剰分 + C + D + E ≥ {GRAD_BCDE_MIN}")
 
     passed_text = "達成" if bundle_ok else "未達成"
     st.write(f"{bundle_label}: 合計 {bundle_total} / 基準 {bundle_need} → {passed_text}")
-
-    # 詳細
-    show_details = st.toggle("合算要件の内訳を表示", value=False)
-    if show_details:
-        b1s = cas['b1_surplus_for_bundle']
-        c = earned.get('C', 0)
-        d = earned.get('D', 0)
-        e = earned.get('E', 0)
-        if mode == "p":
-            st.code(f"B1余剰 {b1s}  +  C {c}  +  E {e}  =  {b1s + c + e}")
-        else:
-            st.code(f"B1余剰 {b1s}  +  C {c}  +  D {d}  +  E {e}  =  {b1s + c + d + e}")
 
     # 未取得講義
     st.markdown("---")
