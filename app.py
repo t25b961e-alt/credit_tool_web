@@ -52,7 +52,6 @@ if st.button("結果を表示"):
 
         if cat == "B0":
             remain = max(0, need - got)
-            # 括弧書き廃止 → 文で表現
             st.write(f"B0区分: 必要 {need} / 取得 {got} / 残り {remain} ・ 余剰 {cas['b0_surplus']}")
 
         elif cat == "B1":
@@ -61,7 +60,6 @@ if st.button("結果を表示"):
                     f"B1区分: 必要 {need} / 取得 {got} / B0からの充当後 {cas['b1_after_fill']} / 残り {cas['b1_short']}"
                 )
             else:
-                # 括弧やラベルの( )を使わずにフラットに
                 st.write(
                     f"B1区分: 必要 {need} / 取得 {got} / 残り 0 ・ 合算に用いるB1余剰 {cas['b1_surplus_for_bundle']}"
                 )
@@ -84,7 +82,7 @@ if st.button("結果を表示"):
     passed_text = "達成" if bundle_ok else "未達成"
     st.write(f"{bundle_label}: 合計 {bundle_total} / 基準 {bundle_need} → {passed_text}")
 
-    # 詳細トグル（任意表示、括弧なしで明示）
+    # 詳細
     show_details = st.toggle("合算要件の内訳を表示", value=False)
     if show_details:
         b1s = cas['b1_surplus_for_bundle']
@@ -96,7 +94,7 @@ if st.button("結果を表示"):
         else:
             st.code(f"B1余剰 {b1s}  +  C {c}  +  D {d}  +  E {e}  =  {b1s + c + d + e}")
 
-    # 未取得講義（見出しのみ・アイコンなし）
+    # 未取得講義
     st.markdown("---")
     st.subheader("未取得の講義")
     any_missing = False
