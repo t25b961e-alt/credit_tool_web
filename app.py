@@ -1,3 +1,4 @@
+# app.py
 import streamlit as st
 from tool import (
     read_requirements, read_courses, calculate_credits,
@@ -5,14 +6,14 @@ from tool import (
     PROG_BCE_MIN, GRAD_BCDE_MIN
 )
 
-st.title("🎓 単位管理ツール Web版（B0→B1→束対応）")
+st.title("単位管理ツール（B0→B1→合算要件 対応）")
 
-# 進級/卒業の選択
+# モード選択
 mode_label = st.radio("判定モード", ("進級", "卒業"))
 mode = "p" if mode_label == "進級" else "g"
 req_file = "requirements2.txt" if mode == "p" else "requirements1.txt"
 
-# 学籍番号（表示上の識別に使うだけ）
+# 学籍番号（任意）
 student_id = st.text_input("学籍番号（任意）")
 
 # データ読み込み
@@ -20,15 +21,15 @@ required = read_requirements(req_file)
 courses  = read_courses()
 
 st.markdown("---")
-st.header("📘 取得済み講義を選択")
+st.header("取得済み講義を選択")
 
-# 講義選択
+# 講義選択UI
 earned_courses = {}
 for cat in ["A", "B0", "B1", "C", "D", "E"]:
     lst = courses.get(cat, [])
-    st.subheader(f"【{cat}区分】")
+    st.subheader(f"{cat}区分")
     if not lst:
-        st.caption("（この区分の登録講義はありません）")
+        st.caption("登録講義なし")
         earned_courses[cat] = []
         continue
     opts = [name for name, _ in lst]
@@ -36,54 +37,68 @@ for cat in ["A", "B0", "B1", "C", "D", "E"]:
     earned_courses[cat] = [(name, cr) for name, cr in lst if name in selected]
 
 if st.button("結果を表示"):
-    # 集計 → 段階的充当 → 束判定
+    # 集計 → 段階的充当 → 合算要件
     earned = calculate_credits(earned_courses)
     cas = cascade_allocation(required, earned)
     bundle_label, bundle_total, bundle_need, bundle_ok = compute_bundle(mode, earned, cas)
 
     st.markdown("---")
-    st.header("📊 結果")
+    st.header("結果")
 
-    # A, B0, B1, C, D, E を順に表示
+    # A, B0, B1, C, D, E
     for cat in ["A", "B0", "B1", "C", "D", "E"]:
         need = required.get(cat, 0)
         got  = earned.get(cat, 0)
 
         if cat == "B0":
             remain = max(0, need - got)
-            st.write(f"**B0区分:** 必要 {need} / 取得 {got} / 残り {remain}（余剰 {cas['b0_surplus']}）")
+            # 括弧書き廃止 → 文で表現
+            st.write(f"B0区分: 必要 {need} / 取得 {got} / 残り {remain} ・ 余剰 {cas['b0_surplus']}")
 
         elif cat == "B1":
             if cas["b1_short"] > 0:
                 st.write(
-                    f"**B1区分:** 必要 {need} / 取得 {got} "
-                    f"（B0充当後 {cas['b1_after_fill']}） / 残り {cas['b1_short']}"
+                    f"B1区分: 必要 {need} / 取得 {got} / B0からの充当後 {cas['b1_after_fill']} / 残り {cas['b1_short']}"
                 )
             else:
+                # 括弧やラベルの( )を使わずにフラットに
                 st.write(
-                    f"**B1区分:** 必要 {need} / 取得 {got} "
-                    f"（B0余剰 +{cas['b0_surplus']} → 充足。束に使えるB1余剰 {cas['b1_surplus_for_bundle']}） / 残り 0"
+                    f"B1区分: 必要 {need} / 取得 {got} / 残り 0 ・ 合算に用いるB1余剰 {cas['b1_surplus_for_bundle']}"
                 )
 
         elif cat == "C":
-            # Cは「取得のみ」表示（束用）
-            st.write(f"**C区分:** 取得 {got}")
+            # Cは取得のみ
+            st.write(f"C区分: 取得 {got}")
 
         else:
             remain = max(0, need - got)
-            st.write(f"**{cat}区分:** 必要 {need} / 取得 {got} / 残り {remain}")
+            st.write(f"{cat}区分: 必要 {need} / 取得 {got} / 残り {remain}")
 
     st.markdown("---")
-    st.subheader("🧮 束条件チェック")
+    st.subheader("合算要件の判定")
     if mode == "p":
         st.caption(f"基準：B1余剰 + C + E ≥ {PROG_BCE_MIN}")
     else:
         st.caption(f"基準：B1余剰 + C + D + E ≥ {GRAD_BCDE_MIN}")
-    st.write(f"{bundle_label}: **{bundle_total} / 基準 {bundle_need}** → {'✅ OK' if bundle_ok else '❌ 不足'}")
 
-    # まだ取っていない講義（各区分）
+    passed_text = "達成" if bundle_ok else "未達成"
+    st.write(f"{bundle_label}: 合計 {bundle_total} / 基準 {bundle_need} → {passed_text}")
+
+    # 詳細トグル（任意表示、括弧なしで明示）
+    show_details = st.toggle("合算要件の内訳を表示", value=False)
+    if show_details:
+        b1s = cas['b1_surplus_for_bundle']
+        c = earned.get('C', 0)
+        d = earned.get('D', 0)
+        e = earned.get('E', 0)
+        if mode == "p":
+            st.code(f"B1余剰 {b1s}  +  C {c}  +  E {e}  =  {b1s + c + e}")
+        else:
+            st.code(f"B1余剰 {b1s}  +  C {c}  +  D {d}  +  E {e}  =  {b1s + c + d + e}")
+
+    # 未取得講義（見出しのみ・アイコンなし）
     st.markdown("---")
-    st.subheader("📋 まだ取っていない講義")
+    st.subheader("未取得の講義")
     any_missing = False
     for cat in ["A", "B0", "B1", "C", "D", "E"]:
         lst = courses.get(cat, [])
@@ -91,14 +106,8 @@ if st.button("結果を表示"):
         remaining = [n for n, _ in lst if n not in taken]
         if remaining:
             any_missing = True
-            st.markdown(f"**{cat}区分**")
+            st.markdown(f"{cat}区分")
             for n in remaining:
                 st.write(f"- {n}")
     if not any_missing:
-        st.write("（未取得候補はありません）")
-
-    # 参考：総取得（目安）
-    total_required = sum(required.values())
-    total_earned   = sum(earned.values())
-    st.markdown("---")
-    st.subheader(f"📈 総取得単位（目安）：{total_earned} / {total_required}")
+        st.write("未取得の講義はありません")
