@@ -6,7 +6,7 @@ from tool import (
     PROG_BCE_MIN, GRAD_BCDE_MIN
 )
 
-st.title("単位管理ツール")
+st.title("単ナビ")
 
 # モード選択
 mode_label = st.radio("判定モード", ("進級", "卒業"))
@@ -52,16 +52,16 @@ if st.button("結果を表示"):
 
         if cat == "B0":
             remain = max(0, need - got)
-            st.write(f"B0区分: 必要 {need} / 取得 {got} / 残り {remain} ・ 余剰 {cas['b0_surplus']}")
+            st.write(f"B(専門基礎科目): 必要 {need} / 取得 {got} / 残り {remain} ・ 余剰 {cas['b0_surplus']}")
 
         elif cat == "B1":
             if cas["b1_short"] > 0:
                 st.write(
-                    f"B1区分: 必要 {need} / 取得 {got} / B0からの充当後 {cas['b1_after_fill']} / 残り {cas['b1_short']}"
+                    f"B(専門応用科目): 必要 {need} / 取得 {got} / B(専門基礎科目)からの充当後 {cas['b1_after_fill']} / 残り {cas['b1_short']}"
                 )
             else:
                 st.write(
-                    f"B1区分: 必要 {need} / 取得 {got} / 残り 0 ・ 合算に用いるB1余剰 {cas['b1_surplus_for_bundle']}"
+                    f"B(専門応用科目): 必要 {need} / 取得 {got} / 残り 0 ・ 合算に用いるB(専門応用科目)余剰 {cas['b1_surplus_for_bundle']}"
                 )
 
         elif cat == "C":
@@ -75,9 +75,9 @@ if st.button("結果を表示"):
     st.markdown("---")
     st.subheader("合算要件の判定")
     if mode == "p":
-        st.caption(f"基準：B1余剰分 + C + E ≥ {PROG_BCE_MIN}")
+        st.caption(f"基準：B(専門応用科目)余剰分 + C + E ≥ {PROG_BCE_MIN}")
     else:
-        st.caption(f"基準：B1余剰分 + C + D + E ≥ {GRAD_BCDE_MIN}")
+        st.caption(f"基準：B(専門応用科目)余剰分 + C + D + E ≥ {GRAD_BCDE_MIN}")
 
     passed_text = "達成" if bundle_ok else "未達成"
     st.write(f"{bundle_label}: 合計 {bundle_total} / 基準 {bundle_need} → {passed_text}")
