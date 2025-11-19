@@ -152,11 +152,11 @@ def compute_bundle(mode, earned, cas):
     if mode == "p":  # 進級: BCE
         total = b1_surplus + c + e
         need  = PROG_BCE_MIN
-        label = "B1余剰 + C + E（BCE束: 進級）"
+        label = "B1余剰分 + C + E"
     else:            # 卒業: BCDE
         total = b1_surplus + c + d + e
         need  = GRAD_BCDE_MIN
-        label = "B1余剰 + C + D + E（BCDE束: 卒業）"
+        label = "B1余剰分 + C + D + E"
 
     ok = total >= need
     return label, total, need, ok
@@ -164,7 +164,6 @@ def compute_bundle(mode, earned, cas):
 
 # -----------------------------------------------------
 # 出力
-#   ※要望対応：C区分は「取得単位のみ」を表示（必要/残りは出さない）
 # -----------------------------------------------------
 def show_remaining(required, earned, courses, earned_courses, cas,
                    bundle_label, bundle_total, bundle_need, bundle_ok):
@@ -180,14 +179,13 @@ def show_remaining(required, earned, courses, earned_courses, cas,
             print(f"B0区分: 必要{need} / 取得{got} / 残り{remain}（余剰 {cas['b0_surplus']}）")
 
         elif cat == "B1":
-            # B1はB0余剰を充当した“充足状況”を詳しく
+            # B1はB0余剰を充当した充足状況を詳しく
             if cas["b1_short"] > 0:
                 print(f"B1区分: 必要{need} / 取得{got}（B0充当後 {cas['b1_after_fill']}） / 残り{cas['b1_short']}")
             else:
                 print(f"B1区分: 必要{need} / 取得{got}（B0余剰+{cas['b0_surplus']} → 充足。束に使えるB1余剰 {cas['b1_surplus_for_bundle']}） / 残り0")
 
         elif cat == "C":
-            # ★要望：Cは束用なので取得だけを簡潔表示
             print(f"C区分: 取得{got}")
 
         else:
@@ -225,7 +223,7 @@ def save_user_data(student_id, earned_courses):
 # メイン
 # -----------------------------------------------------
 def main():
-    print("=== 単位管理ツール（B0→B1→束の段階的充当） ===")
+    print("=== 単位管理ツール ===")
 
     # 進級 or 卒業
     mode = ""
