@@ -6,7 +6,7 @@ from tool import (
     PROG_BCE_MIN, GRAD_BCDE_MIN
 )
 
-st.title("単位管理ツール（B0→B1→合算要件 対応）")
+st.title("単位管理ツール")
 
 # モード選択
 mode_label = st.radio("判定モード", ("進級", "卒業"))
