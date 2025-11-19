@@ -13,12 +13,12 @@ GRAD_BCDE_MIN = 17  # 卒業: B（専門応用科目）余剰分 + C + D + E
 
 # 表示名
 DISPLAY = {
-    "A":  "A",
+    "A":  "A(必修科目)",
     "B0": "B（専門基礎科目）",
     "B1": "B（専門応用科目）",
-    "C":  "C",
-    "D":  "D",
-    "E":  "E",
+    "C":  "C(選択科目)",
+    "D":  "D(特殊選択科目)",
+    "E":  "E(自由科目)",
 }
 def d(cat: str) -> str:
     return DISPLAY.get(cat, cat)
