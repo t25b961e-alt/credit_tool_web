@@ -8,7 +8,7 @@ from tool import (
 
 st.title("単ナビ")
 
-# 表示名マップ（B0/B1の表示を置換）
+# 表示名
 DISPLAY = {
     "A":  "A",
     "B0": "B(専門基礎科目)",
