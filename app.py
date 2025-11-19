@@ -8,6 +8,18 @@ from tool import (
 
 st.title("単ナビ")
 
+# 表示名マップ（B0/B1の表示を置換）
+DISPLAY = {
+    "A":  "A",
+    "B0": "B(専門基礎科目)",
+    "B1": "B(専門応用科目)",
+    "C":  "C",
+    "D":  "D",
+    "E":  "E",
+}
+def disp(cat: str) -> str:
+    return DISPLAY.get(cat, cat)
+
 # モード選択
 mode_label = st.radio("判定モード", ("進級", "卒業"))
 mode = "p" if mode_label == "進級" else "g"
@@ -27,13 +39,13 @@ st.header("取得済み講義を選択")
 earned_courses = {}
 for cat in ["A", "B0", "B1", "C", "D", "E"]:
     lst = courses.get(cat, [])
-    st.subheader(f"{cat}区分")
+    st.subheader(f"{disp(cat)}区分")
     if not lst:
         st.caption("登録講義なし")
         earned_courses[cat] = []
         continue
     opts = [name for name, _ in lst]
-    selected = st.multiselect(f"{cat}区分の講義を選択", options=opts, key=f"ms_{cat}")
+    selected = st.multiselect(f"{disp(cat)}区分の講義を選択", options=opts, key=f"ms_{cat}")
     earned_courses[cat] = [(name, cr) for name, cr in lst if name in selected]
 
 if st.button("結果を表示"):
@@ -65,12 +77,11 @@ if st.button("結果を表示"):
                 )
 
         elif cat == "C":
-            # Cは取得のみ
             st.write(f"C区分: 取得 {got}")
 
         else:
             remain = max(0, need - got)
-            st.write(f"{cat}区分: 必要 {need} / 取得 {got} / 残り {remain}")
+            st.write(f"{disp(cat)}区分: 必要 {need} / 取得 {got} / 残り {remain}")
 
     st.markdown("---")
     st.subheader("合算要件の判定")
@@ -92,7 +103,7 @@ if st.button("結果を表示"):
         remaining = [n for n, _ in lst if n not in taken]
         if remaining:
             any_missing = True
-            st.markdown(f"{cat}区分")
+            st.markdown(f"{disp(cat)}区分")
             for n in remaining:
                 st.write(f"- {n}")
     if not any_missing:
