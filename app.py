@@ -1,3 +1,4 @@
+# app.py
 import streamlit as st
 import pandas as pd
 import os
@@ -16,6 +17,8 @@ DISPLAY = {
     "D":  "D(特殊選択科目)",
     "E":  "E(自由科目)",
 }
+def disp(cat: str) -> str:
+    return DISPLAY.get(cat, cat)
 
 mode = st.radio("要件を選択してください", ["進級要件", "卒業要件"])
 req_file = "requirements2.txt" if mode == "進級要件" else "requirements1.txt"
@@ -39,33 +42,37 @@ if student_id:
                 loaded_taken.setdefault(cat, []).append(name)
         st.success(" 保存されたデータを読み込みました！")
     else:
-        st.info("ℹ 保存データはありません（初回利用と思われます）。")
+        st.info(" 保存データはありません（初回利用と思われます）。")
 
 st.subheader("取得済み講義を選択してください")
 
 earned_courses = {}
 
-for cat, subject_list in courses.items():
-    st.markdown(f"### [{cat}]区分")
+# 表示順はDISPLAYの順で回す（coursesに無い区分はスキップ）
+for cat in ["A", "B0", "B1", "C", "D", "E"]:
+    subject_list = courses.get(cat, [])
+    st.markdown(f"### {disp(cat)}")
+    if not subject_list:
+        st.caption("登録講義なし")
+        earned_courses[cat] = []
+        continue
 
-    #  保存済み科目を除外した選択肢
+    # 保存済みを除いた選択肢
     taken_names = set(loaded_taken.get(cat, []))
     options = [f"{name}（{credit}単位）" for name, credit in subject_list if name not in taken_names]
 
-    default_selected = []  # 保存済みは除外しているので初期値は空
-
     selected = st.multiselect(
-        f"{cat}区分で取得した講義を選択",
+        f"{disp(cat)}で取得した講義を選択",
         options,
-        default=default_selected,
         key=f"sel_{cat}"
     )
 
-    # 保存済みと今回選択をマージ
+    # まず保存済み分
     earned_courses[cat] = [(name, credit) for name, credit in subject_list if name in taken_names]
+    # 今回の選択分（単位を文字列から抽出：\d+ でOK）
     for sel in selected:
         name = sel.split("（")[0]
-        m = re.search(r"(\\d+)", sel)
+        m = re.search(r"(\d+)", sel)     # ← 修正：バックスラッシュ1つ
         credit = int(m.group(1)) if m else 0
         earned_courses[cat].append((name, credit))
 
@@ -74,18 +81,20 @@ if st.button("結果を表示"):
 
     st.subheader(" 結果")
     rows = []
-    for cat in required:
-        need = required[cat]
+    for cat in ["A", "B0", "B1", "C", "D", "E"]:
+        need = required.get(cat, 0)
         got = earned.get(cat, 0)
         remain = max(0, need - got)
-        rows.append({"区分": cat, "必要": need, "取得": got, "残り": remain})
+        rows.append({"区分": disp(cat), "必要": need, "取得": got, "残り": remain})
     st.table(pd.DataFrame(rows))
 
     st.subheader("詳細")
-    for cat in courses:
-        taken_now = {name for name, _ in earned_courses.get(cat, [])}
-        remaining = [name for name, _ in courses[cat] if name not in taken_now]
-        st.markdown(f"#### [{cat}]区分")
+    for cat in ["A", "B0", "B1", "C", "D", "E"]:
+        if cat not in courses:
+            continue
+        taken_now = [name for name, _ in earned_courses.get(cat, [])]
+        remaining = [name for name, _ in courses[cat] if name not in set(taken_now)]
+        st.markdown(f"#### {disp(cat)}")
         st.write(f"取得済み: {', '.join(taken_now) if taken_now else 'なし'}")
         st.write(f"未取得: {', '.join(remaining) if remaining else 'すべて取得済み'}")
 
